@@ -1,9 +1,8 @@
-package main
+package drive
 
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -13,8 +12,6 @@ import (
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/drive/v3"
 )
 
 // getClient uses a Context and Config to retrieve a Token
@@ -53,7 +50,7 @@ func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 	if err != nil {
 		log.Fatalf("Unable to retrieve token from web %v", err)
 	}
-	
+
 	return tok
 }
 
@@ -117,48 +114,4 @@ func saveToken(file string, token *oauth2.Token) {
 	if err != nil {
 		log.Fatalf("Unable to encode token to file path %q: %v", file, err)
 	}
-}
-
-func main() {
-
-	if len(os.Args) != 2 {
-		fmt.Println("Error: missing file name argument")
-		return
-	}
-	filename := os.Args[1]
-
-	ctx := context.Background()
-
-	b, err := ioutil.ReadFile("keys.json")
-	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
-	}
-
-	config, err := google.ConfigFromJSON(b, drive.DriveFileScope)
-	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
-	}
-	client := getClient(ctx, config)
-
-	srv, err := drive.New(client)
-	if err != nil {
-		log.Fatalf("Unable to retrieve drive Client %v", err)
-	}
-
-	f, err := os.Open(filename)
-	if err != nil {
-		log.Fatalf("Error opening %q: %v", filename, err)
-	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Fatalf("Error closing %q: %v", filename, err)
-		}
-	}()
-
-	driveFile, err := srv.Files.Create(&drive.File{Name: filename}).Media(f).Do()
-	if err != nil {
-		log.Fatalf("Unable to create file: %v", err)
-	}
-
-	log.Printf("File %s uploaded with ID %s", driveFile.Name, driveFile.Id)
 }
