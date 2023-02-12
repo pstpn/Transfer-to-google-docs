@@ -19,20 +19,24 @@ type Service struct {
 // NewService creates a new Google Drive service.
 func NewService(ctx context.Context, secretFile string) (*Service, error) {
 
+	// Read client secret file.
 	b, err := os.ReadFile(secretFile)
 	if err != nil {
 		log.Printf("Unable to read client secret file: %v", err)
 		return nil, err
 	}
 
+	// Get config from secret file.
 	config, err := google.ConfigFromJSON(b, drive.DriveFileScope)
 	if err != nil {
 		log.Printf("Unable to parse client secret file to config: %v", err)
 		return nil, err
 	}
 
+	// Get client from config.
 	client := getClient(ctx, config)
 
+	// Get Drive service.
 	service, err := drive.New(client)
 	if err != nil {
 		log.Printf("Unable to retrieve Drive client: %v", err)
@@ -48,6 +52,7 @@ func NewService(ctx context.Context, secretFile string) (*Service, error) {
 // CreateFileInDrive creates a file in Google Drive.
 func (s *Service) CreateFileInDrive(dataFilename string) (string, error) {
 
+	// Open file.
 	f, err := os.Open(dataFilename)
 	if err != nil {
 		log.Printf("Error opening %q: %v", dataFilename, err)
@@ -59,6 +64,7 @@ func (s *Service) CreateFileInDrive(dataFilename string) (string, error) {
 		}
 	}()
 
+	// Create file in Drive.
 	driveFile, err := s.service.Files.Create(&drive.File{Name: dataFilename}).Media(f).Do()
 	if err != nil {
 		log.Printf("Unable to create file: %v", err)
